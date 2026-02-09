@@ -4,14 +4,13 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// hidden canvas for text pixels
+// hidden canvas for text
 const textCanvas = document.createElement("canvas");
 const textCtx = textCanvas.getContext("2d");
-
 textCanvas.width = canvas.width;
 textCanvas.height = canvas.height;
 
-// video for hand tracking
+// video
 const video = document.createElement("video");
 video.style.display = "none";
 document.body.appendChild(video);
@@ -20,34 +19,52 @@ let particles = [];
 const GAP = 6;
 const SIZE = 2;
 
-// floating offset
+// floating
 let offsetX = 0;
 let targetOffsetX = 0;
 
-// ================= PARTICLE CLASS =================
+// modes
+let currentMode = "NORMAL";
+let time = 0;
+let waveStrength = 0;
+
+// ================= PARTICLE =================
 class Particle {
     constructor(x, y) {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
+        this.baseX = x;
+        this.baseY = y;
         this.tx = x;
         this.ty = y;
         this.size = SIZE;
+        this.hue = Math.random() * 360;
     }
 
     update() {
         this.x += (this.tx - this.x) * 0.05;
         this.y += (this.ty - this.y) * 0.05;
+
+        if (currentMode === "WAVE") {
+            this.y += Math.sin((this.x + time) * 0.02) * waveStrength;
+        }
     }
 
     draw() {
         ctx.beginPath();
         ctx.arc(this.x + offsetX, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = `hsl(${this.hue},100%,70%)`;
+
+        // ✨ GLOW
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = `hsl(${this.hue},100%,70%)`;
+
         ctx.fill();
+        ctx.shadowBlur = 0;
     }
 }
 
-// ================= CREATE TEXT =================
+// ================= TEXT SHAPE =================
 function createText(text) {
     const targets = [];
     textCtx.clearRect(0, 0, canvas.width, canvas.height);
@@ -62,8 +79,7 @@ function createText(text) {
 
     for (let y = 0; y < canvas.height; y += GAP) {
         for (let x = 0; x < canvas.width; x += GAP) {
-            const i = (y * canvas.width + x) * 4;
-            if (data[i + 3] > 128) {
+            if (data[(y * canvas.width + x) * 4 + 3] > 128) {
                 targets.push({ x, y });
             }
         }
@@ -82,11 +98,13 @@ function createText(text) {
     });
 }
 
-// ================= ANIMATION LOOP =================
+// ================= ANIMATION =================
 function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     offsetX += (targetOffsetX - offsetX) * 0.05;
+    time += 1;
 
     particles.forEach(p => {
         p.update();
@@ -98,58 +116,44 @@ function animate() {
 
 // ================= HAND TRACKING =================
 const hands = new Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
 });
 
 hands.setOptions({
     maxNumHands: 1,
-    modelComplexity: 1,
     minDetectionConfidence: 0.7,
     minTrackingConfidence: 0.7
 });
 
-hands.onResults(onHandResults);
+let lastHandX = null;
 
-// count fingers
-function countFingers(landmarks) {
-    let fingers = 0;
+hands.onResults(res => {
+    if (!res.multiHandLandmarks) return;
 
-    if (landmarks[8].y < landmarks[6].y) fingers++;   // index
-    if (landmarks[12].y < landmarks[10].y) fingers++; // middle
-    if (landmarks[16].y < landmarks[14].y) fingers++; // ring
-    if (landmarks[20].y < landmarks[18].y) fingers++; // pinky
+    const lm = res.multiHandLandmarks[0];
 
-    return fingers;
-}
-
-let lastGesture = "";
-
-function onHandResults(results) {
-    if (!results.multiHandLandmarks) return;
-
-    const lm = results.multiHandLandmarks[0];
-
-    // horizontal hand movement → floating
-    const handX = lm[0].x; // wrist
+    // LEFT / RIGHT FLOAT
+    const handX = lm[0].x;
     targetOffsetX = (handX - 0.5) * 300;
 
-    const fingers = countFingers(lm);
-
-    if (fingers === 0 && lastGesture !== "LOVE") {
-        createText("LOVE");
-        lastGesture = "LOVE";
+    // HAND SPEED → WAVE STRENGTH
+    if (lastHandX !== null) {
+        const speed = Math.abs(handX - lastHandX);
+        waveStrength = Math.min(speed * 200, 15);
     }
+    lastHandX = handX;
 
-    if (fingers === 2 && lastGesture !== "HELLO") {
-        createText("HELLO");
-        lastGesture = "HELLO";
-    }
+    // FINGER COUNT
+    const fingers =
+        (lm[8].y < lm[6].y) +
+        (lm[12].y < lm[10].y) +
+        (lm[16].y < lm[14].y) +
+        (lm[20].y < lm[18].y);
 
-    if (fingers === 1 && lastGesture !== "HETSI") {
-        createText("HETSI");
-        lastGesture = "HETSI";
-    }
-}
+    // MODE SWITCH
+    if (fingers >= 4) currentMode = "WAVE";   // open palm
+    if (fingers === 0) currentMode = "NORMAL"; // fist
+});
 
 // camera
 const camera = new Camera(video, {
@@ -167,7 +171,7 @@ window.addEventListener("resize", () => {
     canvas.height = window.innerHeight;
     textCanvas.width = canvas.width;
     textCanvas.height = canvas.height;
-    createText(lastGesture || "LOVE");
+    createText("LOVE");
 });
 
 // start
