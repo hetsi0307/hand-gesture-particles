@@ -2,14 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gesture Particle Project</title>
+    <title>Hand Gesture Particle Project</title>
+
+    <!-- Make site responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Link CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <!-- Canvas for particles -->
     <canvas id="canvas"></canvas>
 
+    <!-- ================= MediaPipe Libraries ================= -->
+    <!-- These MUST be loaded BEFORE main.js -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+    <!-- ================= Your Main Script ================= -->
     <script src="main.js"></script>
+
 </body>
 </html>
-
