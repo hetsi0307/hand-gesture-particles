@@ -10,11 +10,12 @@ const textCtx = textCanvas.getContext("2d");
 textCanvas.width = canvas.width;
 textCanvas.height = canvas.height;
 
-// video
+// video for hand tracking
 const video = document.createElement("video");
 video.style.display = "none";
 document.body.appendChild(video);
 
+// ================= CONFIG =================
 let particles = [];
 const GAP = 6;
 const SIZE = 2;
@@ -23,18 +24,19 @@ const SIZE = 2;
 let offsetX = 0;
 let targetOffsetX = 0;
 
-// modes
+// wave mode
 let currentMode = "NORMAL";
 let time = 0;
 let waveStrength = 0;
+
+// gesture state
+let lastShape = "";
 
 // ================= PARTICLE =================
 class Particle {
     constructor(x, y) {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.baseX = x;
-        this.baseY = y;
         this.tx = x;
         this.ty = y;
         this.size = SIZE;
@@ -55,7 +57,7 @@ class Particle {
         ctx.arc(this.x + offsetX, this.y, this.size, 0, Math.PI * 2);
         ctx.fillStyle = `hsl(${this.hue},100%,70%)`;
 
-        // ✨ GLOW
+        // ✨ glow
         ctx.shadowBlur = 12;
         ctx.shadowColor = `hsl(${this.hue},100%,70%)`;
 
@@ -64,7 +66,7 @@ class Particle {
     }
 }
 
-// ================= TEXT SHAPE =================
+// ================= CREATE TEXT =================
 function createText(text) {
     const targets = [];
     textCtx.clearRect(0, 0, canvas.width, canvas.height);
@@ -127,32 +129,54 @@ hands.setOptions({
 
 let lastHandX = null;
 
-hands.onResults(res => {
-    if (!res.multiHandLandmarks) return;
+hands.onResults(results => {
+    if (!results.multiHandLandmarks) return;
 
-    const lm = res.multiHandLandmarks[0];
+    const lm = results.multiHandLandmarks[0];
 
-    // LEFT / RIGHT FLOAT
+    // left / right floating
     const handX = lm[0].x;
     targetOffsetX = (handX - 0.5) * 300;
 
-    // HAND SPEED → WAVE STRENGTH
+    // speed for wave strength
     if (lastHandX !== null) {
         const speed = Math.abs(handX - lastHandX);
         waveStrength = Math.min(speed * 200, 15);
     }
     lastHandX = handX;
 
-    // FINGER COUNT
+    // finger count
     const fingers =
         (lm[8].y < lm[6].y) +
         (lm[12].y < lm[10].y) +
         (lm[16].y < lm[14].y) +
         (lm[20].y < lm[18].y);
 
-    // MODE SWITCH
-    if (fingers >= 4) currentMode = "WAVE";   // open palm
-    if (fingers === 0) currentMode = "NORMAL"; // fist
+    // ✊ FIST → LOVE
+    if (fingers === 0 && lastShape !== "LOVE") {
+        createText("LOVE");
+        lastShape = "LOVE";
+        currentMode = "NORMAL";
+    }
+
+    // ☝️ ONE FINGER → HETSI
+    else if (fingers === 1 && lastShape !== "HETSI") {
+        createText("HETSI");
+        lastShape = "HETSI";
+        currentMode = "NORMAL";
+    }
+
+    // ✌️ TWO FINGERS → HELLO
+    else if (fingers === 2 && lastShape !== "HELLO") {
+        createText("HELLO");
+        lastShape = "HELLO";
+        currentMode = "NORMAL";
+    }
+
+    // 🖐 OPEN PALM → WAVE
+    else if (fingers >= 4) {
+        currentMode = "WAVE";
+    }
 });
 
 // camera
@@ -171,7 +195,7 @@ window.addEventListener("resize", () => {
     canvas.height = window.innerHeight;
     textCanvas.width = canvas.width;
     textCanvas.height = canvas.height;
-    createText("LOVE");
+    createText(lastShape || "LOVE");
 });
 
 // start
