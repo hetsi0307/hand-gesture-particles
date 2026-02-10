@@ -1,15 +1,22 @@
+/* Reset default browser styles */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-body {
-    background: black;
-    overflow: hidden;
+/* Full screen black background */
+html, body {
+  width: 100%;
+  height: 100%;
+  background: black;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
 }
 
+/* Canvas should cover entire screen */
 canvas {
-    display: block;
+  display: block;
+  width: 100vw;
+  height: 100vh;
 }
-
