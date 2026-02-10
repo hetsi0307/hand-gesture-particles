@@ -1,29 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Gesture Controlled Particle System</title>
-
-    <!-- Responsive layout -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Basic styling -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>Gesture Controlled Display</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
 
-    <!-- Canvas for particles -->
-    <canvas id="canvas"></canvas>
+<body style="margin:0; background:black; overflow:hidden;">
 
-    <!-- ================= MediaPipe Libraries ================= -->
-    <!-- These MUST be loaded before main.js -->
+  <canvas id="canvas"></canvas>
 
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
-    <!-- ================= Main Logic ================= -->
-    <script src="main.js"></script>
-
+  <script src="main.js"></script>
 </body>
 </html>
